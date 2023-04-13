@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TropWet map</title>
+<!--<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />-->
+<meta name='viewport' content='width=device-width, initial-scale=1.0' />
+
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
+integrity="sha384-Zh+y1U8o6/7ni8Mp8szvUfZjGeKKS10CGH3IlD6L1X+XwzYgQ1llOjw/Wslc0cma"
+crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"
+integrity="sha384-6rCYjRgWDEI2RlZxiVihj1WIZB/uvFiRCGpavTVgFrSPDL0Bk1AiqCW+mmv5h0LP"
+crossorigin="anonymous"></script>
+
+<style>
+body { margin:0; padding:0; }
+body, table, tr, td, th, div, h1, h2, input { font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif; font-size: 11pt; }
+#map { position:absolute; top:0; bottom:0; width:100%; } /* full size */
+.ctl {
+padding: 2px 10px 2px 10px;
+background: white;
+background: rgba(255,255,255,0.9);
+box-shadow: 0 0 15px rgba(0,0,0,0.2);
+border-radius: 5px;
+text-align: right;
+}
+.title {
+font-size: 14pt;
+font-weight: bold;
+}
+.src {
+font-size: 10pt;
+}
+
+	
+	
+/*Legend specific*/
+.legend {
+  padding: 6px 8px;
+  font: 14px Arial, Helvetica, sans-serif;
+  background: white;
+  background: rgba(255, 255, 255, 0.8);
+  /*box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);*/
+  /*border-radius: 5px;*/
+  line-height: 24px;
+  color: #555;
+}
+.legend h4 {
+  text-align: left;
+  font-size: 14px;
+  margin: 2px 12px 8px;
+  color: #777;
+}
+
+.legend span {
+  position: relative;
+  bottom: 3px;
+}
+
+.legend i {
+  width: 18px;
+  height: 18px;
+  float: left;
+  margin: 0 8px 0 0;
+  opacity: 0.7;
+}
+
+.legend i.icon {
+  background-size: 18px;
+  background-color: rgba(255, 255, 255, 1);
+}	
+
+</style>
+
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+
+/* **** Leaflet **** */
+var maxZoom = 14;
+
+// Map
+var map = L.map('map', {
+center: [52.90996576, -4.12135301],
+zoom: 10,
+minZoom: 1,
+maxZoom: maxZoom
+});
+
+
+// Base layers
+//  .. OpenStreetMap
+var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 1, maxZoom: maxZoom}).addTo(map);
+	
+//  .. CartoDB Positron
+var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>', minZoom: 1, maxZoom: maxZoom});
+	
+mapLink = '<a href="http://www.esri.com/">Esri</a>';
+wholink = 'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+var satImg = L.tileLayer(
+'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {attribution: '&copy; '+mapLink+', '+wholink, maxZoom: maxZoom});
+
+//  .. OSM Toner
+//var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', {attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.', minZoom: 1, maxZoom: maxZoom});
+
+//  .. White background
+var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: 1, maxZoom: maxZoom});
+
+	
+
+var opacity = 0.7;	
+
+// Overlay layers (TMS)
+
+	
+var dtm = L.tileLayer('./tiles_OS_5m_DTM_porthmadog_reclass_5m/{z}/{x}/{y}.png', {tms: true, opacity: opacity, attribution: "", minZoom: 1, maxZoom: maxZoom});
+
+	
+	
+	
+
+var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "ESRI Imagery": satImg, "Without background": white}
+
+var overlaymaps = {
+	"Sea-level rise": dtm
+	}
+
+
+
+var legend2 = L.control({ position: "bottomleft" });
+
+legend2.onAdd = function(map) {
+  var div = L.DomUtil.create("div", "legend");
+	div.innerHTML += "<h4>Sea-level rise (m)</h4>";
+	div.innerHTML += '<i style="background: #0868ac"></i><span>1m</span><br>';
+	div.innerHTML += '<i style="background: #43a2ca"></i><span>2m</span><br>';
+	div.innerHTML += '<i style="background: #7bccc4"></i><span>3m</span><br>';
+	div.innerHTML += '<i style="background: #bae4bc"></i><span>4m</span><br>';
+	div.innerHTML += '<i style="background: #f0f9e8"></i><span>5m</span><br>';
+
+
+  return div;
+};
+
+legend2.addTo(map)
+	
+
+
+
+
+// Title
+var title = L.control();
+title.onAdd = function(map) {
+this._div = L.DomUtil.create('div', 'ctl title');
+this.update();
+return this._div;
+};
+title.update = function(props) {
+this._div.innerHTML = "Simulated historical sea-level";
+};
+title.addTo(map);
+
+
+
+// Add base layers
+L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
+
+// Fit to overlay bounds (SW and NE points with (lat, lon))
+map.fitBounds([[52.99885976, -4.17498327], [52.86276377, -4.02492872]]);
+
+</script>
+
+</body>
+</html>
